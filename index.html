@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Product Card</title>
+    <style>
+  * {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+  }
+
+  body {
+    font-family: sans-serif;
+    background: #f5f5f5;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    padding: 1rem;
+  }
+
+  .card {
+    background: #fff;
+    border: 1px solid #000;
+    border-radius: 8px;
+    padding: 1.5rem;
+    max-width: 360px;
+    width: 100%;
+  }
+
+  .store {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: #888;
+    margin-bottom: 0.5rem;
+  }
+
+  .product-name {
+    font-size: 20px;
+    font-weight: 600;
+    margin-bottom: 1rem;
+  }
+
+  .price-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 1rem;
+  }
+
+  .price {
+    font-size: 24px;
+    font-weight: 700;
+  }
+
+  .original {
+    font-size: 14px;
+    color: #999;
+    text-decoration: line-through;
+  }
+
+  .badge {
+    background: #000;
+    color: #fff;
+    font-size: 11px;
+    font-weight: 600;
+    padding: 3px 8px;
+    border-radius: 4px;
+  }
+
+  .specs {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 0.5rem;
+  }
+
+  .specs tr {
+    border-top: 1px solid #eee;
+  }
+
+  .spec-key {
+    font-size: 13px;
+    color: #666;
+    padding: 6px 0;
+    width: 50%;
+  }
+
+  .spec-val {
+    font-size: 13px;
+    font-weight: 500;
+    padding: 6px 0;
+    text-align: right;
+  }
+</style>
+  </head>
+  <body>
+    <div id="card-root"></div>
+    <script>
+        const hash = window.location.hash.slice(1);
+        // console.log(hash);
+
+try {
+  const data = JSON.parse(decodeURIComponent(atob(hash)));
+  const decoded = JSON.parse(decodeURIComponent(atob(hash)));
+//   console.log(decoded);
+  render(data);
+} catch (e) {
+  document.getElementById("card-root").innerHTML = "<p>Invalid or missing product data.</p>";
+}
+
+function render(data) {
+  const root = document.getElementById("card-root");
+  root.innerHTML = `
+    <div class="card">
+      <div class="store">${data.storeName}</div>
+      <div class="product-name">${data.name}</div>
+      <div class="price-row">
+        <span class="price">₹${data.price}</span>
+        <span class="original">₹${data.originalPrice}</span>
+        <span class="badge">${data.discount}% OFF</span>
+      </div>
+      <table class="specs">
+        ${data.qrSpecs.map(s => `
+          <tr>
+            <td class="spec-key">${s.key}</td>
+            <td class="spec-val">${s.value}</td>
+          </tr>
+        `).join("")}
+      </table>
+    </div>
+  `;
+}
+    </script>
+  </body>
+</html>

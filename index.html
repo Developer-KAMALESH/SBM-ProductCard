@@ -104,7 +104,6 @@
 
 try {
   const data = JSON.parse(decodeURIComponent(atob(hash)));
-  const decoded = JSON.parse(decodeURIComponent(atob(hash)));
 //   console.log(decoded);
   render(data);
 } catch (e) {
@@ -116,19 +115,19 @@ function render(data) {
   root.innerHTML = `
     <div class="card">
       <div class="store">${data.storeName}</div>
-      <div class="product-name">${data.name}</div>
+      <div class="product-name">${data.productName}</div>
       <div class="price-row">
-        <span class="price">₹${data.price}</span>
-        <span class="original">₹${data.originalPrice}</span>
-        <span class="badge">${data.discount}% OFF</span>
+        <span class="price">₹${data.productPrice}</span>
+        <span class="original">₹${data.productOriginalPrice}</span>
+        <span class="badge">${data.productDiscount}% OFF</span>
       </div>
       <table class="specs">
-        ${data.qrSpecs.map(s => `
-          <tr>
-            <td class="spec-key">${s.key}</td>
-            <td class="spec-val">${s.value}</td>
-          </tr>
-        `).join("")}
+${Object.entries(data.specs).map(([key, value]) => `
+  <tr>
+    <td class="spec-key">${key}</td>
+    <td class="spec-val">${value}</td>
+  </tr>
+`).join("")}}
       </table>
     </div>
   `;

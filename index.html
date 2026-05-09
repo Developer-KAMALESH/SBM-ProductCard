@@ -100,11 +100,13 @@
     <div id="card-root"></div>
     <script>
         const hash = window.location.hash.slice(1);
-        // console.log(hash);
 
 try {
-  const data = JSON.parse(decodeURIComponent(atob(hash)));
-//   console.log(decoded);
+  const standardBase64 = hash
+    .replace(/-/g, '+')
+    .replace(/_/g, '/')
+    + '==';
+  const data = JSON.parse(decodeURIComponent(atob(standardBase64)));
   render(data);
 } catch (e) {
   document.getElementById("card-root").innerHTML = "<p>Invalid or missing product data.</p>";
@@ -127,11 +129,11 @@ ${Object.entries(data.specs).map(([key, value]) => `
     <td class="spec-key">${key}</td>
     <td class="spec-val">${value}</td>
   </tr>
-`).join("")}}
+`).join("")}
       </table>
     </div>
   `;
-}
+  }
     </script>
   </body>
 </html>

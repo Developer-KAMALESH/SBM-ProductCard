@@ -5,14 +5,14 @@ const stores = {
         storeWhatsapp: '918367687339',
         storeWebsite: 'https://sribharathmart.netlify.app',
         storeGoogleReview: 'https://g.page/r/CS0d0v8-RSErEBM/review',
-        bg: 'mart.JPG' 
+        bg: 'src/mart.JPG' 
     },
     2: {
         storeName: 'SRI BHARATH METALS',
         storeLocation: 'UTHUKOTTAI, Tamil Nadu',
         storeWhatsapp: '917639867339',
         storeGoogleReview: 'https://g.page/r/CS3amTdgeF7UEBM/review',
-        bg: 'metals.png'
+        bg: 'src/metals.png'
     }
 };
 

@@ -3,8 +3,8 @@ const stores = {
         storeName: 'SRI BHARATH MART',
         storeLocation: 'SURUTUPALLI, Andhra Pradesh',
         storeWhatsapp: '918367687339',
+        storeWebsite: 'https://sribharathmart.netlify.app',
         storeGoogleReview: 'https://g.page/r/CS0d0v8-RSErEBM/review',
-        storeWebsite:'https://sribharathmart.netlify.app/',
         bg: 'mart.JPG' 
     },
     2: {
@@ -24,27 +24,12 @@ function init() {
     }
 
     try {
-        // 1. Decode the Base64 from the QR code
         const base64 = hash.replace(/-/g, '+').replace(/_/g, '/');
         const decodedString = atob(base64);
-        const qrData = JSON.parse(decodeURIComponent(decodedString));
+        const data = JSON.parse(decodeURIComponent(decodedString));
         
-        console.log("QR Data received:", qrData);
-
-        // 2. Find the store in your database using the ID from the QR
-        // If your QR uses { "storeId": 1 }, this finds the full store object
-        const store = stores[qrData.storeId];
-
-        if (!store) {
-            showError("Store not found (ID: " + qrData.storeId + ")");
-            return;
-        }
-
-        // 3. IMPORTANT: If your new QR only sends the ID, 
-        // you must ensure the OTHER details (name, price) are also available.
-        // If the QR has { "storeId": 1, "name": "Air Fryer" }, this will work:
-        render(qrData, store);
-
+        const store = stores[data.storeId] || stores[1];
+        render(data, store);
     } catch (e) {
         console.error("Decoding error:", e);
         showError("Invalid product link.");
@@ -54,14 +39,23 @@ function init() {
 function render(data, store) {
     const root = document.getElementById("card-root");
     
-    // Safety check for keys (matching your Reliance Digital example)
-    const pName = data.name || "Product";
-    const pPrice = data.price || "0";
-    const pOriginal = data.originalPrice || "0";
-    const pDiscount = data.discount || "0";
-    const pSpecs = data.specs || [];
+    // Mapping keys from your Angular Qr Service
+    const pName = data.productName || "Product";
+    const pCode = data.productCode || "N/A"; // New: Product Code
+    const pPrice = data.productPrice || "0";
+    const pOriginal = data.productOriginalPrice || "0";
+    const pDiscount = data.productDiscount || "0";
+    
+    const specsHTML = data.specs 
+        ? Object.entries(data.specs).map(([key, value]) => `
+            <tr>
+                <td class="spec-key">${key}</td>
+                <td class="spec-val">${value}</td>
+            </tr>
+        `).join("")
+        : '<tr><td colspan="2">No specs available</td></tr>';
 
-    const msg = `Hi ${store.storeName}, I'm interested in ${pName} (Price: ₹${pPrice}).`;
+    const msg = `Hi ${store.storeName}, I'm interested in ${pName} (Code: ${pCode}, Price: ₹${pPrice}).`;
     const waLink = `https://wa.me/${store.storeWhatsapp}?text=${encodeURIComponent(msg)}`;
 
     root.innerHTML = `
@@ -74,18 +68,16 @@ function render(data, store) {
 
                 <div class="card">
                     <div class="product-name">${pName}</div>
+                    <div style="font-size: 12px; color: #666; margin-bottom: 10px;">Code: ${pCode}</div> <!-- Displayed Code -->
+                    
                     <div class="price-row">
                         <span class="price">₹${pPrice}</span>
                         <span class="original">₹${pOriginal}</span>
                         <span class="badge">${pDiscount}% OFF</span>
                     </div>
+                    
                     <table class="specs">
-                        ${pSpecs.map(s => `
-                            <tr>
-                                <td class="spec-key">${s.key}</td>
-                                <td class="spec-val">${s.value}</td>
-                            </tr>
-                        `).join("")}
+                        ${specsHTML}
                     </table>
                 </div>
 
@@ -100,10 +92,7 @@ function render(data, store) {
 }
 
 function showError(message) {
-    document.getElementById("card-root").innerHTML = `
-        <div class="card" style="text-align:center; margin-top: 20vh;">
-            <p>${message}</p>
-        </div>`;
+    document.getElementById("card-root").innerHTML = `<div class="card"><p>${message}</p></div>`;
 }
 
 init();

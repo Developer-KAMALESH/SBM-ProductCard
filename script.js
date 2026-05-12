@@ -17,35 +17,48 @@ const stores = {
 };
 
 function init() {
-    console.log("Script loaded and initializing...");
+    // 1. Get the hash from the URL
     const hash = window.location.hash.slice(1);
     
     if (!hash) {
-        showError("Please scan the QR code to view product details.");
+        showError("Please scan a valid QR code.");
         return;
     }
 
     try {
+        // 2. Standardize Base64 (Handling URL-safe chars and padding)
         const standardBase64 = hash
             .replace(/-/g, '+')
             .replace(/_/g, '/')
             + '==='.slice(0, (4 - hash.length % 4) % 4);
             
-        const data = JSON.parse(decodeURIComponent(atob(standardBase64)));
-        console.log("Decoded data:", data);
+        // 3. Decode and Parse
+        const decodedString = atob(standardBase64);
+        const data = JSON.parse(decodeURIComponent(decodedString));
+        
+        console.log("Success! Decoded data:", data);
 
-        // Fallback to Store 1 if storeId is missing
+        // 4. Match Store (Default to Store 1 if storeId is missing)
         const store = stores[data.storeId] || stores[1];
+        
         render(data, store);
     } catch (e) {
-        console.error("Decoding error:", e);
-        showError("Invalid product link.");
+        console.error("Decoding error detail:", e);
+        showError("Invalid product data. The link might be broken.");
     }
 }
 
 function render(data, store) {
     const root = document.getElementById("card-root");
-    const msg = `Hi ${store.storeName}, I'm interested in ${data.name} (Price: ₹${data.price}).`;
+    
+    // Safety check for keys (matching your Reliance Digital example)
+    const pName = data.name || "Product";
+    const pPrice = data.price || "0";
+    const pOriginal = data.originalPrice || "0";
+    const pDiscount = data.discount || "0";
+    const pSpecs = data.specs || [];
+
+    const msg = `Hi ${store.storeName}, I'm interested in ${pName} (Price: ₹${pPrice}).`;
     const waLink = `https://wa.me/${store.storeWhatsapp}?text=${encodeURIComponent(msg)}`;
 
     root.innerHTML = `
@@ -57,15 +70,18 @@ function render(data, store) {
                 </header>
 
                 <div class="card">
-                    <div class="product-name">${data.name}</div>
+                    <div class="product-name">${pName}</div>
                     <div class="price-row">
-                        <span class="price">₹${data.price}</span>
-                        <span class="original">₹${data.originalPrice}</span>
-                        <span class="badge">${data.discount}% OFF</span>
+                        <span class="price">₹${pPrice}</span>
+                        <span class="original">₹${pOriginal}</span>
+                        <span class="badge">${pDiscount}% OFF</span>
                     </div>
                     <table class="specs">
-                        ${data.specs.map(s => `
-                            <tr><td class="spec-key">${s.key}</td><td class="spec-val">${s.value}</td></tr>
+                        ${pSpecs.map(s => `
+                            <tr>
+                                <td class="spec-key">${s.key}</td>
+                                <td class="spec-val">${s.value}</td>
+                            </tr>
                         `).join("")}
                     </table>
                 </div>
@@ -73,6 +89,7 @@ function render(data, store) {
                 <div class="action-grid">
                     <a href="${waLink}" class="btn btn-whatsapp" target="_blank">Order on WhatsApp</a>
                     <a href="${store.storeGoogleReview}" class="btn btn-review" target="_blank">Google Review</a>
+                    ${store.storeWebsite ? `<a href="${store.storeWebsite}" class="btn btn-web" target="_blank">Visit Website</a>` : ''}
                 </div>
             </div>
         </div>
@@ -80,7 +97,10 @@ function render(data, store) {
 }
 
 function showError(message) {
-    document.getElementById("card-root").innerHTML = `<div class="card"><p>${message}</p></div>`;
+    document.getElementById("card-root").innerHTML = `
+        <div class="card" style="text-align:center; margin-top: 20vh;">
+            <p>${message}</p>
+        </div>`;
 }
 
 init();

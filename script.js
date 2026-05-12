@@ -17,8 +17,10 @@ const stores = {
 };
 
 function init() {
-    // 1. Get the hash from the URL
-    const hash = window.location.hash.slice(1);
+    console.log("Decoding process started...");
+    
+    // 1. Get the hash and remove any potential trailing junk
+    let hash = window.location.hash.slice(1).split('&')[0].trim();
     
     if (!hash) {
         showError("Please scan a valid QR code.");
@@ -26,25 +28,37 @@ function init() {
     }
 
     try {
-        // 2. Standardize Base64 (Handling URL-safe chars and padding)
-        const standardBase64 = hash
-            .replace(/-/g, '+')
-            .replace(/_/g, '/')
-            + '==='.slice(0, (4 - hash.length % 4) % 4);
+        // 2. Comprehensive Base64 cleanup
+        // Replaces URL-safe characters and ensures proper padding
+        let base64 = hash.replace(/-/g, '+').replace(/_/g, '/');
+        
+        while (base64.length % 4 !== 0) {
+            base64 += '=';
+        }
             
-        // 3. Decode and Parse
-        const decodedString = atob(standardBase64);
-        const data = JSON.parse(decodeURIComponent(decodedString));
+        // 3. Multi-layer Decoding
+        // We first decode the Base64, then handle the URI component encoding
+        const binaryString = atob(base64);
         
-        console.log("Success! Decoded data:", data);
+        // Some generators encode with escape(), others with encodeURIComponent()
+        // This try/catch inside handles potential double-encoding
+        let decodedData;
+        try {
+            decodedData = JSON.parse(decodeURIComponent(binaryString));
+        } catch (innerError) {
+            // Fallback for non-URI encoded strings
+            decodedData = JSON.parse(binaryString);
+        }
+        
+        console.log("Successfully Decoded:", decodedData);
 
-        // 4. Match Store (Default to Store 1 if storeId is missing)
-        const store = stores[data.storeId] || stores[1];
+        // 4. Store Selection (Fallback to Store 1)
+        const store = stores[decodedData.storeId] || stores[1];
         
-        render(data, store);
+        render(decodedData, store);
     } catch (e) {
-        console.error("Decoding error detail:", e);
-        showError("Invalid product data. The link might be broken.");
+        console.error("Critical Decoding Error:", e);
+        showError("Invalid product link. Please scan the QR code again.");
     }
 }
 

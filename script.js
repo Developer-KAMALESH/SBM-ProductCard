@@ -17,48 +17,37 @@ const stores = {
 };
 
 function init() {
-    console.log("Decoding process started...");
-    
-    // 1. Get the hash and remove any potential trailing junk
-    let hash = window.location.hash.slice(1).split('&')[0].trim();
-    
+    const hash = window.location.hash.slice(1);
     if (!hash) {
         showError("Please scan a valid QR code.");
         return;
     }
 
     try {
-        // 2. Comprehensive Base64 cleanup
-        // Replaces URL-safe characters and ensures proper padding
-        let base64 = hash.replace(/-/g, '+').replace(/_/g, '/');
+        // 1. Decode the Base64 from the QR code
+        const base64 = hash.replace(/-/g, '+').replace(/_/g, '/');
+        const decodedString = atob(base64);
+        const qrData = JSON.parse(decodeURIComponent(decodedString));
         
-        while (base64.length % 4 !== 0) {
-            base64 += '=';
-        }
-            
-        // 3. Multi-layer Decoding
-        // We first decode the Base64, then handle the URI component encoding
-        const binaryString = atob(base64);
-        
-        // Some generators encode with escape(), others with encodeURIComponent()
-        // This try/catch inside handles potential double-encoding
-        let decodedData;
-        try {
-            decodedData = JSON.parse(decodeURIComponent(binaryString));
-        } catch (innerError) {
-            // Fallback for non-URI encoded strings
-            decodedData = JSON.parse(binaryString);
-        }
-        
-        console.log("Successfully Decoded:", decodedData);
+        console.log("QR Data received:", qrData);
 
-        // 4. Store Selection (Fallback to Store 1)
-        const store = stores[decodedData.storeId] || stores[1];
-        
-        render(decodedData, store);
+        // 2. Find the store in your database using the ID from the QR
+        // If your QR uses { "storeId": 1 }, this finds the full store object
+        const store = stores[qrData.storeId];
+
+        if (!store) {
+            showError("Store not found (ID: " + qrData.storeId + ")");
+            return;
+        }
+
+        // 3. IMPORTANT: If your new QR only sends the ID, 
+        // you must ensure the OTHER details (name, price) are also available.
+        // If the QR has { "storeId": 1, "name": "Air Fryer" }, this will work:
+        render(qrData, store);
+
     } catch (e) {
-        console.error("Critical Decoding Error:", e);
-        showError("Invalid product link. Please scan the QR code again.");
+        console.error("Decoding error:", e);
+        showError("Invalid product link.");
     }
 }
 
